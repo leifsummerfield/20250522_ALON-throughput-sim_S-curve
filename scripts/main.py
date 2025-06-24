@@ -12,8 +12,12 @@ Major use-cases (selectable via CLI or run all):
 To add new use-cases, define a new function and add to the USE_CASES dict.
 CLI Usage Examples:
 
+# Or simply run without arguments to execute the default single_cycle case
+# using settings defined at the top of this file:
+# python scripts/main.py
+
 # Run ALL use-cases using the default baseline config
-python scripts/main.py --base-dir "C:/Users/lsummerfield/Documents/ESL Data Analytics/20250522_ALON throughput sim"
+python scripts/main.py --base-dir "C:/Users/lsummerfield/Documents/ESL Data Analytics/20250522_ALON-throughput-sim_S-curve"
 
 # Run only the single-cycle debugging use-case (no sweeps, no vendor table)
 python scripts/main.py --base-dir "..." --usecase single_cycle
@@ -64,6 +68,17 @@ from plotter import (
     plot_vendor_stages_stacked_bar,
     plot_velocity_vs_position_scurve,
 )
+# =============================
+# DEFAULT RUN SETTINGS
+# =============================
+DEFAULT_SETTINGS = {
+    "base_dir": Path(__file__).resolve().parents[1],
+    "config": "tv3_baseline.json",
+    "usecase": ["single_cycle"],
+    "pdf_report": False,
+    "loglevel": "INFO",
+}
+
 
 # =======================
 # 1. CONFIGURATION UTILS
@@ -363,13 +378,13 @@ def main():
     parser.add_argument(
         "--base-dir",
         type=str,
-        required=True,
-        help="Project base directory (e.g., C:/Users/lsummerfield/Documents/ESL Data Analytics/20250522_ALON throughput sim)"
+        default=str(DEFAULT_SETTINGS['base_dir']),
+        help="Project base directory (e.g., C:/Users/lsummerfield/Documents/ESL Data Analytics/20250522_ALON-throughput-sim_S-curve)"
     )
     parser.add_argument(
         "--config",
         type=str,
-        default="tv3_baseline.json",
+        default=DEFAULT_SETTINGS["config"],
         help="Name of config file to load from the config/ directory"
     )
     parser.add_argument(
@@ -377,18 +392,18 @@ def main():
         type=str,
         nargs="*",
         choices=list(USE_CASES.keys()) + ["all"],
-        default=["all"],
+        default=DEFAULT_SETTINGS["usecase"],
         help="Which use-case(s) to run (default: all)"
     )
     parser.add_argument(
         "--pdf-report",
-        action="store_true",
+        action="store_true", default=DEFAULT_SETTINGS["pdf_report"],
         help="Generate PDF report from latest results"
     )
     parser.add_argument(
         "--loglevel",
         type=str,
-        default="INFO",
+        default=DEFAULT_SETTINGS["loglevel"],
         help="Set logging level (DEBUG, INFO, WARNING, ERROR)"
     )
     args = parser.parse_args()
