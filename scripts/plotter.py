@@ -110,15 +110,23 @@ def plot_velocity_vs_position_scurve(profiles, simulators, out_dir):
     for p, sim in zip(profiles, simulators):
         t, x, v, a, phase = sim.simulate_scurve_scan_with_backoff()
         plt.plot(x, v, label=p.name, color=p.color, lw=2)
-        scan_L = sim.scan_length
-        plt.axvspan(x[0], x[0]+scan_L, color=p.color, alpha=0.1, label=f"{p.name} scan region")
-        idx_accel_end = np.where(x >= x[0])[0][0]
-        idx_const_end = np.where(x >= x[0]+scan_L)[0][0]
-        plt.scatter([x[idx_accel_end], x[idx_const_end]],
-                    [v[idx_accel_end], v[idx_const_end]],
+
+        phase_arr = np.array(phase)
+        accel_end_idx = np.where(phase_arr == "const")[0][0]
+        decel_start_idx = np.where(phase_arr == "decel")[0][0]
+
+        span_start = x[accel_end_idx]
+        span_end = x[decel_start_idx]
+
+        plt.axvspan(span_start, span_end, color=p.color, alpha=0.1,
+                    label=f"{p.name} scan region")
+        plt.scatter([span_start, span_end],
+                    [v[accel_end_idx], v[decel_start_idx]],
                     color='black', zorder=5)
-        plt.text(x[0], max(v)*1.03, "Scan Start", ha='left', va='bottom', color=p.color)
-        plt.text(x[0]+scan_L, max(v)*1.03, "Scan End", ha='right', va='bottom', color=p.color)
+        plt.text(span_start, max(v) * 1.03, "Scan Start",
+                 ha='left', va='bottom', color=p.color)
+        plt.text(span_end, max(v) * 1.03, "Scan End",
+                 ha='right', va='bottom', color=p.color)
     plt.xlabel("Stage Position (mm)")
     plt.ylabel("Velocity (mm/s)")
     plt.title("Velocity vs. Position (S-curve, Accel/Const/Decel) for Scan with Backoff")
