@@ -12,17 +12,10 @@ class MotionProfile:
     color: str = "blue"
 
 
-# Example profiles used in notebooks or quick tests
-linear_motor = MotionProfile(
-    name="Linear Motor",
+# Example profile used in notebooks or quick tests
+stage_profile = MotionProfile(
+    name="Stage",
     max_velocity=300,
     max_acceleration=2000,
     color="blue",
-)
-
-stepper_motor = MotionProfile(
-    name="Stepper Motor",
-    max_velocity=50,
-    max_acceleration=8000,
-    color="orange",
 )

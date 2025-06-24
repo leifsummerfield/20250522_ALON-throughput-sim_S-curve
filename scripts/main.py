@@ -114,25 +114,16 @@ def setup_dirs(base_dir: Path) -> dict:
 # 2. EXPERIMENT UTILITY FUNCTIONS
 # ==============================
 
-def build_stage_profiles(config: dict, settle_linear, settle_stepper, jerk_linear, jerk_stepper):
-    """Create and return motion profile objects based on config, including jerk."""
-    linear_motor = MotionProfile(
-        name="Linear Motor",
-        max_velocity=config["linear_motor"]["max_velocity"],
-        max_acceleration=config["linear_motor"]["max_acceleration"],
-        jerk_max=jerk_linear,
-        settle_time=settle_linear,
+def build_stage_profile(config: dict, settle_time, jerk):
+    """Create and return a motion profile object based on config."""
+    return MotionProfile(
+        name="Stage",
+        max_velocity=config["stage"]["max_velocity"],
+        max_acceleration=config["stage"]["max_acceleration"],
+        jerk_max=jerk,
+        settle_time=settle_time,
         color="blue"
     )
-    stepper_motor = MotionProfile(
-        name="Stepper Motor",
-        max_velocity=config["stepper_motor"]["max_velocity"],
-        max_acceleration=config["stepper_motor"]["max_acceleration"],
-        jerk_max=jerk_stepper,
-        settle_time=settle_stepper,
-        color="orange"
-    )
-    return linear_motor, stepper_motor
 
 def print_geometry(config, num_lines):
     print(
@@ -145,30 +136,20 @@ def print_geometry(config, num_lines):
 # ==========================
 
 def usecase_single_cycle_debug(config, dirs, params):
-    """
-    Run single line scan debugging for both stage types (using S-curve).
-    """
+    """Run single line scan debugging for the stage (S-curve)."""
     logging.info("Running use-case: Single Line Scan Debugging")
-    linear_motor, stepper_motor = build_stage_profiles(
-        config, params['settle_linear'], params['settle_stepper'], params['jerk_linear'], params['jerk_stepper']
+    stage = build_stage_profile(
+        config, params['settle_time'], params['jerk']
     )
     scan_length = params['scan_length']
     step_size = params['step_size']
     index_time = params['index_time']
     comms_overhead = params['comms_overhead']
 
-    profiles = [linear_motor, stepper_motor]
+    profiles = [stage]
     simulators = [
         ExperimentSimulator(
-            profile=linear_motor,
-            scan_length=scan_length,
-            step_size=step_size,
-            num_lines=1,
-            index_time=index_time,
-            overhead_per_line=comms_overhead
-        ),
-        ExperimentSimulator(
-            profile=stepper_motor,
+            profile=stage,
             scan_length=scan_length,
             step_size=step_size,
             num_lines=1,
@@ -203,89 +184,59 @@ def usecase_parametric_sweep(config, dirs, params):
     Run parametric sweeps for velocity, acceleration, and velocity-acceleration surfaces (all S-curve).
     """
     logging.info("Running use-case: Parametric Sweep Analysis")
-    settle_linear = params['settle_linear']
-    settle_stepper = params['settle_stepper']
-    jerk_linear = params['jerk_linear']
-    jerk_stepper = params['jerk_stepper']
+    settle_time = params['settle_time']
+    jerk = params['jerk']
     experiment_config = params['experiment_config']
 
     vel_range = np.linspace(*config["velocity_sweep"])
     accel_range = np.linspace(*config["acceleration_sweep"])
-    v_lin, t_lin = sweep_velocity(
-        stage_name="Linear Motor",
-        accel=config["linear_motor"]["max_acceleration"],
-        jerk=jerk_linear,
-        settle_time=settle_linear,
+    v_vals, t_vals = sweep_velocity(
+        stage_name="Stage",
+        accel=config["stage"]["max_acceleration"],
+        jerk=jerk,
+        settle_time=settle_time,
         color="blue",
-        velocity_range=vel_range,
-        experiment_config=experiment_config
-    )
-    v_step, t_step = sweep_velocity(
-        stage_name="Stepper Motor",
-        accel=config["stepper_motor"]["max_acceleration"],
-        jerk=jerk_stepper,
-        settle_time=settle_stepper,
-        color="orange",
         velocity_range=vel_range,
         experiment_config=experiment_config
     )
     plot_velocity_vs_total_time(
-        [v_lin, v_step], [t_lin, t_step],
-        ["Linear Motor", "Stepper Motor"],
-        ["blue", "orange"],
+        [v_vals], [t_vals],
+        ["Stage"],
+        ["blue"],
         dirs["parametric"]
     )
 
     accel_range = np.linspace(*config["acceleration_sweep"])
-    a_lin, t_acc_lin = sweep_accel(
-        stage_name="Linear Motor",
-        vmax=config["linear_motor"]["max_velocity"],
-        jerk=jerk_linear,
-        settle_time=settle_linear,
+    a_vals, t_acc_vals = sweep_accel(
+        stage_name="Stage",
+        vmax=config["stage"]["max_velocity"],
+        jerk=jerk,
+        settle_time=settle_time,
         color="blue",
         accel_range=accel_range,
         experiment_config=experiment_config
     )
-    a_step, t_acc_step = sweep_accel(
-        stage_name="Stepper Motor",
-        vmax=config["stepper_motor"]["max_velocity"],
-        jerk=jerk_stepper,
-        settle_time=settle_stepper,
-        color="orange",
-        accel_range=accel_range,
-        experiment_config=experiment_config
-    )
     plot_accel_vs_total_time(
-        [a_lin, a_step], [t_acc_lin, t_acc_step],
-        ["Linear Motor", "Stepper Motor"],
-        ["blue", "orange"],
+        [a_vals], [t_acc_vals],
+        ["Stage"],
+        ["blue"],
         dirs["parametric"]
     )
 
     # 2D surface
     v_2d = np.linspace(*config["velocity_2d_sweep"])
     a_2d = np.linspace(*config["acceleration_2d_sweep"])
-    V_lin, A_lin, Z_lin = sweep_velocity_accel(
-        stage_name="Linear Motor",
-        jerk=jerk_linear,
-        settle_time=settle_linear,
+    V, A, Z = sweep_velocity_accel(
+        stage_name="Stage",
+        jerk=jerk,
+        settle_time=settle_time,
         color="blue",
         velocity_range=v_2d,
         accel_range=a_2d,
         experiment_config=experiment_config
     )
-    V_step, A_step, Z_step = sweep_velocity_accel(
-        stage_name="Stepper Motor",
-        jerk=jerk_stepper,
-        settle_time=settle_stepper,
-        color="orange",
-        velocity_range=v_2d,
-        accel_range=a_2d,
-        experiment_config=experiment_config
-    )
     # Optionally, uncomment for 2D surface plots
-    # plot_velocity_accel_surface(V_lin, A_lin, Z_lin, "Linear Motor", dirs["parametric"], "velocity_accel_surface_linear.png")
-    # plot_velocity_accel_surface(V_step, A_step, Z_step, "Stepper Motor", dirs["parametric"], "velocity_accel_surface_stepper.png")
+    # plot_velocity_accel_surface(V, A, Z, "Stage", dirs["parametric"], "velocity_accel_surface.png")
 
 def usecase_vendor_table(config, dirs, params):
     """
@@ -293,18 +244,9 @@ def usecase_vendor_table(config, dirs, params):
     """
     logging.info("Running use-case: Vendor Table/Part Number Analysis")
     csv_path = dirs["data"] / "stage_data.csv"
-    settle_time_lookup = {
-        "Linear": params['settle_linear'],
-        "Stepper": params['settle_stepper']
-    }
-    index_time_lookup = {
-        "Linear": params['index_time'],
-        "Stepper": params['index_time']
-    }
-    jerk_lookup = {
-        "Linear": params['jerk_linear'],
-        "Stepper": params['jerk_stepper']
-    }
+    settle_time_lookup = None
+    index_time_lookup = None
+    jerk_lookup = None
     labels, stage_types, breakdowns = analyze_stages_from_csv(
         csv_path,
         params['experiment_config'],
@@ -312,7 +254,7 @@ def usecase_vendor_table(config, dirs, params):
         settle_time_lookup=settle_time_lookup,
         overhead_per_line=params['comms_overhead'],
         jerk_lookup=jerk_lookup,
-        default_jerk=params['jerk_linear']
+        default_jerk=params['jerk']
     )
     plot_vendor_stages_stacked_bar(labels, stage_types, breakdowns, dirs["parametric"])
 
@@ -420,10 +362,8 @@ def main():
     array_height = config["array_height_mm"]
     index_time = config["index_time_s"]
     comms_overhead = config["comms_overhead_s"]
-    settle_linear = config["settle_linear_s"]
-    settle_stepper = config["settle_stepper_s"]
-    jerk_linear = config["linear_motor"].get("jerk_max", 10000)
-    jerk_stepper = config["stepper_motor"].get("jerk_max", 10000)
+    settle_time = config["settle_time_s"]
+    jerk = config["stage"].get("jerk_max", 10000)
     num_lines = int(array_height / step_size) + 1
 
     print_geometry(config, num_lines)
@@ -441,10 +381,8 @@ def main():
         array_height=array_height,
         index_time=index_time,
         comms_overhead=comms_overhead,
-        settle_linear=settle_linear,
-        settle_stepper=settle_stepper,
-        jerk_linear=jerk_linear,
-        jerk_stepper=jerk_stepper,
+        settle_time=settle_time,
+        jerk=jerk,
         num_lines=num_lines,
         experiment_config=experiment_config
     )
@@ -464,10 +402,8 @@ def main():
             "Array Height (mm)": array_height,
             "Number of Lines": num_lines,
             "Index Time (s)": index_time,
-            "Settle Time (Linear, s)": settle_linear,
-            "Settle Time (Stepper, s)": settle_stepper,
-            "Jerk (Linear, mm/s³)": jerk_linear,
-            "Jerk (Stepper, mm/s³)": jerk_stepper,
+            "Settle Time (s)": settle_time,
+            "Jerk (mm/s³)": jerk,
             "Comms Overhead (s)": comms_overhead,
         }
         parameters_dict.update({
