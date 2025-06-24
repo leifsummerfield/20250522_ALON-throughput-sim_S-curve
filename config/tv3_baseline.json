@@ -9,7 +9,7 @@
   "stage": {
     "max_velocity": 5,
     "max_acceleration": 25,
-    "jerk_max": 40000
+    "jerk_max": 400
   },
   "velocity_sweep": [1, 20, 20],
   "acceleration_sweep": [5, 100, 20],
