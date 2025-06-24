@@ -15,7 +15,7 @@ All experiment parameters are configured via JSON files in the `config/` directo
 ## Project Structure
 
 ```
-20250522_ALON throughput sim/
+20250522_ALON-throughput-sim_S-curve/
 │
 ├── config/
 │   └── tv3_baseline.json      # Example config file
@@ -55,12 +55,14 @@ Edit `config/tv3_baseline.json` or create a new config variant as needed.
 
 ### 3. **Run a simulation**
 
+You can also simply run `python scripts/main.py` with no arguments to execute the `single_cycle` scenario using the default parameters defined at the top of `scripts/main.py`.
+
 **Basic example (run all use-cases with baseline config):**
 
 ```bash
-python scripts/main.py --base-dir "C:/Users/lsummerfield/Documents/ESL Data Analytics/20250522_ALON throughput sim"
+python scripts/main.py --base-dir "C:/Users/lsummerfield/Documents/ESL Data Analytics/20250522_ALON-throughput-sim_S-curve"
 
-python scripts/main.py --base-dir "C:\Users\Leif\Documents\ESL_Analytics\20250522_ALON throughput sim" --usecase single_cycle
+python scripts/main.py --base-dir "C:\Users\Leif\Documents\ESL_Analytics\20250522_ALON-throughput-sim_S-curve" --usecase single_cycle
 ```
 
 **Run only a specific use-case:**
