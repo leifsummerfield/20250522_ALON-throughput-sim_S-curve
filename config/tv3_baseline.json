@@ -4,22 +4,16 @@
   "step_size_mm": 0.005,
   "array_height_mm": 5.0,
   "index_time_s": 0.06,
-  "settle_linear_s": 0.29,
-  "settle_stepper_s": 0.050,
+  "settle_time_s": 0.29,
   "comms_overhead_s": 0.156,
-  "linear_motor": {
+  "stage": {
     "max_velocity": 5,
     "max_acceleration": 25,
     "jerk_max": 40000
-  },
-  "stepper_motor": {
-    "max_velocity": 1,
-    "max_acceleration": 200,
-    "jerk_max": 10000
   },
   "velocity_sweep": [1, 20, 20],
   "acceleration_sweep": [5, 100, 20],
   "velocity_2d_sweep": [1, 20, 1],
   "acceleration_2d_sweep": [5, 100, 5],
-  "notes": "TV3 baseline system config; classic 10mm scan, 5um step, typical timing values."
+  "notes": "TV3 baseline system config; classic 10mm scan, 5um step."
 }
