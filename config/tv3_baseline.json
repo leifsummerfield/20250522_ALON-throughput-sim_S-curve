@@ -1,6 +1,6 @@
 {
   "name": "tv3_baseline",
-  "scan_length_mm": 10.0,
+  "scan_length_mm": 13.0,
   "step_size_mm": 0.005,
   "array_height_mm": 5.0,
   "index_time_s": 0.06,
