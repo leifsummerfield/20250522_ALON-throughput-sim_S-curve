@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from motion_profile import MotionProfile
 
 
@@ -60,21 +61,38 @@ def s_curve_to_velocity(v_end: float, amax: float, jmax: float, dt: float = 0.00
 
 
 def s_curve_phase_durations(vmax: float, amax: float, jmax: float, distance: float):
-    """
-    Return (t_accel, t_const, t_decel) durations for an S-curve move over 'distance'.
-    """
-    t_j = amax / jmax
-    d_j = (jmax * t_j**3) / 6
-    d_a = 0.5 * amax * t_j**2
-    d_min = 2 * (d_j + d_a)
+    """Return (t_accel, t_const, t_decel) durations for a jerk limited S-curve move."""
+    # Time to ramp acceleration with max jerk
+    v_thresh = amax ** 2 / jmax
 
-    if distance <= d_min:
-        # Entire move is a triangular jerk-limited
-        t_total = np.cbrt(6 * distance / jmax)
-        return t_total, 0.0, t_total
+    if vmax <= v_thresh:
+        # We never reach amax - triangular jerk limited profile
+        t1 = math.sqrt(vmax / jmax)
+        t2 = 0.0
     else:
-        t_const = (distance - d_min) / vmax
-        return t_j, t_const, t_j
+        # Trapezoidal profile with constant acceleration segment
+        t1 = amax / jmax
+        t2 = (vmax - v_thresh) / amax
+
+    t3 = t1
+    t_accel = t1 + t2 + t3
+
+    # Distance travelled during acceleration phase
+    d1 = jmax * t1 ** 3 / 6
+    v1 = 0.5 * jmax * t1 ** 2
+    d2 = v1 * t2 + 0.5 * amax * t2 ** 2
+    v2 = v1 + amax * t2
+    d3 = v2 * t3 + 0.5 * amax * t3 ** 2 - jmax * t3 ** 3 / 6
+    d_accel = d1 + d2 + d3
+
+    if distance <= 2 * d_accel:
+        # Not enough distance to reach vmax - triangular profile overall
+        t_total = (6 * distance / jmax) ** (1 / 3)
+        return t_total, 0.0, t_total
+
+    t_const = (distance - 2 * d_accel) / vmax
+    t_decel = t_accel
+    return t_accel, t_const, t_decel
 
 
 class ExperimentSimulator:
