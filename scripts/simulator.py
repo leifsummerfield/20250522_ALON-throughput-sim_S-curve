@@ -3,6 +3,14 @@ import math
 from motion_profile import MotionProfile
 
 
+def _time_array(duration: float, dt: float) -> np.ndarray:
+    """Return a time array from 0 to duration inclusive using step dt."""
+    arr = np.arange(0, duration, dt)
+    if not np.isclose(arr[-1], duration):
+        arr = np.append(arr, duration)
+    return arr
+
+
 def s_curve_to_velocity(v_end: float, amax: float, jmax: float, dt: float = 0.0005):
     """
     Generate a jerk-limited S-curve to accelerate from 0 to v_end.
@@ -21,9 +29,9 @@ def s_curve_to_velocity(v_end: float, amax: float, jmax: float, dt: float = 0.00
     t3 = t1
 
     # Time grids for each phase
-    t1_phase = np.arange(0, t1, dt)
-    t2_phase = np.arange(dt, t2, dt) if t2 > 0 else np.array([])
-    t3_phase = np.arange(0, t3, dt)
+    t1_phase = _time_array(t1, dt)
+    t2_phase = _time_array(t2, dt)[1:] if t2 > 0 else np.array([])
+    t3_phase = _time_array(t3, dt)
 
     # Phase 1: jerk up
     a1 = jmax * t1_phase
