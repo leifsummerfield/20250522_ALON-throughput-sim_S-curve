@@ -42,33 +42,45 @@ def plot_velocity_accel_surface(V, A, Z, label, out_dir, fname):
     plt.show()
 
 def plot_single_cycle_breakdown_bar(breakdowns, profiles, out_dir):
+    """Plot timeline-style breakdown for a single line scan cycle."""
     phase_labels = ["Acceleration", "Constant", "Deceleration", "Index", "Settle", "Overhead"]
     phase_colors = [
         "#1976D2", "#388E3C", "#FBC02D", "#E64A19", "#7B1FA2", "#616161"
     ]
+
     profile_labels = [p.name for p in profiles]
-    phase_values = []
-    for breakdown in breakdowns:
-        phase_values.append([breakdown[ph] for ph in phase_labels])
-    phase_values = np.array(phase_values)
-    fig, ax = plt.subplots(figsize=(9, 6))
-    ind = np.arange(len(profiles))
-    bottom = np.zeros(len(profiles))
-    for i, (phase, color) in enumerate(zip(phase_labels, phase_colors)):
-        vals = phase_values[:, i]
-        ax.bar(ind, vals, bottom=bottom, label=phase, color=color)
-        bottom += vals
-    # Annotate total time
-    for idx, breakdown in enumerate(breakdowns):
-        total = breakdown['Total']
-        ax.text(idx, total + total*0.01, f"{total:.2f}s", ha='center', va='bottom', fontweight='bold')
-    ax.set_xticks(ind)
-    ax.set_xticklabels(profile_labels)
-    ax.set_ylabel("Time (s) for One Line Scan Cycle")
-    ax.set_title("Single Line Scan Cycle Time Breakdown (Stacked Bar)")
-    ax.legend(title="Phase", bbox_to_anchor=(1.01, 1), loc='upper left')
+    fig, ax = plt.subplots(figsize=(10, 2 + len(profiles)))
+
+    max_total = max(bd["Total"] for bd in breakdowns)
+
+    for row, (label, bd) in enumerate(zip(profile_labels, breakdowns)):
+        start = 0.0
+        for phase, color in zip(phase_labels, phase_colors):
+            duration = bd[phase]
+            ax.barh(row, duration, left=start, height=0.5, color=color)
+            ax.annotate(
+                f"{phase}\n{duration:.2f}s",
+                xy=(start + duration / 2, row),
+                xytext=(start + duration / 2, row + 0.6),
+                textcoords="data",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                arrowprops=dict(arrowstyle="->", lw=0.5, color="black"),
+            )
+            start += duration
+
+        ax.text(start + max_total * 0.02, row, f"{bd['Total']:.2f}s", va="center", ha="left", fontweight="bold")
+
+    handles = [plt.Rectangle((0, 0), 1, 1, color=c) for c in phase_colors]
+    ax.legend(handles, phase_labels, title="Phase", bbox_to_anchor=(1.01, 1), loc="upper left")
+    ax.set_xlabel("Time (s) for One Line Scan Cycle")
+    ax.set_xlim(0, max_total * 1.2)
+    ax.set_yticks(np.arange(len(profile_labels)))
+    ax.set_yticklabels(profile_labels)
+    ax.set_title("Single Line Scan Cycle Time Breakdown (Timeline)")
     plt.tight_layout()
-    plt.savefig(out_dir / "single_cycle_time_breakdown_stacked_bar.png")
+    plt.savefig(out_dir / "single_cycle_time_breakdown_timeline.png")
     plt.show()
 
 def plot_vendor_stages_stacked_bar(labels, stage_types, breakdowns, out_dir):
