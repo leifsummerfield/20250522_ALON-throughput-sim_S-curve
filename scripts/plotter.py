@@ -53,6 +53,7 @@ def plot_single_cycle_breakdown_bar(breakdowns, profiles, out_dir):
 
     max_total = max(bd["Total"] for bd in breakdowns)
 
+    max_y_text = 0.0
     for row, (label, bd) in enumerate(zip(profile_labels, breakdowns)):
         start = 0.0
         annot_positions = []
@@ -77,6 +78,7 @@ def plot_single_cycle_breakdown_bar(breakdowns, profiles, out_dir):
                 arrowprops=dict(arrowstyle="->", lw=0.5, color="black"),
             )
             annot_positions.append(x_center)
+            max_y_text = max(max_y_text, y_text)
             start += duration
 
         ax.text(start + max_total * 0.02, row, f"{bd['Total']:.2f}s", va="center", ha="left", fontweight="bold")
@@ -87,6 +89,8 @@ def plot_single_cycle_breakdown_bar(breakdowns, profiles, out_dir):
     ax.set_xlim(0, max_total * 1.2)
     ax.set_yticks(np.arange(len(profile_labels)))
     ax.set_yticklabels(profile_labels)
+    upper_y = max(max_y_text + 0.5, len(profile_labels) - 0.5)
+    ax.set_ylim(-0.5, upper_y)
     ax.set_title("Single Line Scan Cycle Time Breakdown (Timeline)")
     plt.tight_layout()
     plt.savefig(out_dir / "single_cycle_time_breakdown_timeline.png")
@@ -115,8 +119,11 @@ def plot_vendor_stages_stacked_bar(labels, stage_types, breakdowns, out_dir):
         vals = phase_values[:, i]
         bars = ax.bar(ind, vals, bottom=bottom, label=phase, color=color, edgecolor=bar_edge_colors, linewidth=2)
         bottom += vals
+    max_total = max(totals)
+    y_offset = max_total * 0.02
     for idx, total in enumerate(totals):
-        ax.text(idx, total + total*0.01, f"{total:.1f}s", ha='center', va='bottom', fontweight='bold', rotation=90)
+        ax.text(idx, total + y_offset, f"{total:.1f}s", ha='center', va='bottom', fontweight='bold', rotation=90)
+    ax.set_ylim(0, max_total + y_offset * 5)
     ax.set_xticks(ind)
     ax.set_xticklabels(labels, rotation=90, ha='center', fontsize=8)
     ax.set_ylabel("Total Time (s) for Full Raster")
