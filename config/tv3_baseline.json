@@ -4,12 +4,12 @@
   "step_size_mm": 0.005,
   "array_height_mm": 5.0,
   "index_time_s": 0.06,
-  "settle_time_s": 0.29,
-  "comms_overhead_s": 0.156,
+  "settle_time_s": 0.1,
+  "comms_overhead_s": 0.25,
   "stage": {
     "max_velocity": 5,
-    "max_acceleration": 25,
-    "jerk_max": 400
+    "max_acceleration": 150,
+    "jerk_max": 40000
   },
   "velocity_sweep": [1, 20, 20],
   "acceleration_sweep": [5, 100, 20],
