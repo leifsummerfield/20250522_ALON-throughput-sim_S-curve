@@ -55,19 +55,28 @@ def plot_single_cycle_breakdown_bar(breakdowns, profiles, out_dir):
 
     for row, (label, bd) in enumerate(zip(profile_labels, breakdowns)):
         start = 0.0
+        annot_positions = []
         for phase, color in zip(phase_labels, phase_colors):
             duration = bd[phase]
             ax.barh(row, duration, left=start, height=0.5, color=color)
+
+            x_center = start + duration / 2
+            base_y = row + 0.6
+            offset_count = sum(
+                1 for pos in annot_positions if abs(x_center - pos) < 0.05 * max_total
+            )
+            y_text = base_y + 0.3 * offset_count
             ax.annotate(
                 f"{phase}\n{duration:.2f}s",
-                xy=(start + duration / 2, row),
-                xytext=(start + duration / 2, row + 0.6),
+                xy=(x_center, row),
+                xytext=(x_center, y_text),
                 textcoords="data",
                 ha="center",
                 va="bottom",
                 fontsize=8,
                 arrowprops=dict(arrowstyle="->", lw=0.5, color="black"),
             )
+            annot_positions.append(x_center)
             start += duration
 
         ax.text(start + max_total * 0.02, row, f"{bd['Total']:.2f}s", va="center", ha="left", fontweight="bold")
